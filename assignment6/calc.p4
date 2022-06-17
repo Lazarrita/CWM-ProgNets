@@ -235,7 +235,7 @@ register<bit<8>>(REGISTER_SIZE) r;
         if (hdr.p4calc.isValid()) {
             
          r.read(meta.read_from_register,0);
-          if (meta.read_from_register < 10) {
+          if (meta.read_from_register < 4) {
           	calculate.apply();
           	meta.read_from_register = meta.read_from_register + 1;
           	r.write(0,meta.read_from_register);

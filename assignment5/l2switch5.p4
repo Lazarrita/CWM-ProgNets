@@ -53,7 +53,17 @@ parser MyParser(packet_in packet,
 
     state start {
         /* TODO: add parser logic */
-        transition accept;
+	packet.extract(hdr.ethernet);
+	
+	transition select(hdr.ethernet.etherType) {
+	0x0800: parse_ipv4;
+	default: accept;
+	}
+}
+   state parse_ipv4{
+	packet.extract(hdr.ipv4);
+	transition accept;
+        
     }
 }
 
@@ -79,6 +89,14 @@ control MyIngress(inout headers hdr,
     }
 
     action ipv4_forward(macAddr_t dstAddr, egressSpec_t port) {
+   
+    	hdr.ipv4.ttl = hdr.ipv4.ttl - 1;
+    	hdr.ethernet.srcAddr = hdr.ethernet.dstAddr;
+    	hdr.ethernet.dstAddr = dstAddr;
+    	standard_metadata.egress_spec = port;
+    	
+    	
+
         /* TODO: fill out code in action body */
     }
 
@@ -99,8 +117,13 @@ control MyIngress(inout headers hdr,
         /* TODO: fix ingress control logic
          *  - ipv4_lpm should be applied only when IPv4 header is valid
          */
+
+         	
+         if (hdr.ipv4.isValid()) {
         ipv4_lpm.apply();
     }
+
+}
 }
 
 /*************************************************************************
@@ -144,6 +167,8 @@ control MyComputeChecksum(inout headers hdr, inout metadata meta) {
 
 control MyDeparser(packet_out packet, in headers hdr) {
     apply {
+    	packet.emit(hdr.ethernet);
+    	packet.emit(hdr.ipv4);
         /* TODO: add deparser logic */
     }
 }
